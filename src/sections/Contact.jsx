@@ -1,22 +1,25 @@
 "use client";
 import { useState } from "react";
-import emailjs from "@emailjs/browser";
 import Alert from "../components/Alert";
 import { Particles } from "../components/Particles";
+
+const initialFormData = {
+  name: "",
+  phone: "",
+  message: "",
+};
+
 const Contact = () => {
-  const [formData, setFormData] = useState({
-    name: "",
-    phone: "",
-    email: "",
-    message: "",
-  });
+  const [formData, setFormData] = useState(initialFormData);
   const [isLoading, setIsLoading] = useState(false);
   const [showAlert, setShowAlert] = useState(false);
   const [alertType, setAlertType] = useState("success");
   const [alertMessage, setAlertMessage] = useState("");
+
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
+
   const showAlertMessage = (type, message) => {
     setAlertType(type);
     setAlertMessage(message);
@@ -25,33 +28,42 @@ const Contact = () => {
       setShowAlert(false);
     }, 5000);
   };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setIsLoading(true);
 
     try {
-      console.log("From submitted:", formData);
-      await emailjs.send(
-        "service_79b0nyj",
-        "template_17us8im",
-        {
-          from_name: formData.name,
-          to_name: "Mahsa",
-          from_email: formData.email,
-          to_email: "mahsasamie894@gmail.com",
-          message: formData.message,
+      const response = await fetch("/api/contact", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
         },
-        "pn-Bw_mS1_QQdofuV",
+        body: JSON.stringify(formData),
+      });
+
+      const result = await response.json();
+
+      if (!response.ok) {
+        throw new Error(result.error || "Something went wrong.");
+      }
+
+      setFormData(initialFormData);
+      showAlertMessage(
+        "success",
+        result.message || "پیام شما با موفقیت ثبت شد و در اولین فرصت با شما تماس می‌گیرم.",
       );
-      setIsLoading(false);
-      setFormData({ name: "", phone: "", message: "" });
-      showAlertMessage("success", "You message has been sent!");
     } catch (error) {
+      console.error(error);
+      showAlertMessage(
+        "danger",
+        error.message || "در ثبت پیام شما مشکلی پیش آمد. لطفاً دوباره تلاش کنید.",
+      );
+    } finally {
       setIsLoading(false);
-      console.log(error);
-      showAlertMessage("danger", "Somthing went wrong!");
     }
   };
+
   return (
     <section
       id="contact"
@@ -69,9 +81,10 @@ const Contact = () => {
         <div className="flex flex-col items-start w-full gap-5 mb-10">
           <h2 className="text-heading">ارتباط با من</h2>
           <p className="font-normal text-neutral-400">
-           اگر قصد داشته باشید یک وب‌سایت جدید بسازید، پلتفرم فعلی‌تان را بهبود دهید، یا پروژه‌ای منحصربه‌فرد را به واقعیت تبدیل کنید، من اینجا هستم تا کمک کنم.
+            اگر قصد داشته باشید یک وب‌سایت جدید بسازید، پلتفرم فعلی‌تان را بهبود دهید، یا پروژه‌ای منحصربه‌فرد را به واقعیت تبدیل کنید، من اینجا هستم تا کمک کنم.
           </p>
         </div>
+
         <form className="w-full" onSubmit={handleSubmit}>
           <div className="mb-5">
             <label htmlFor="name" className="feild-label">
@@ -82,29 +95,29 @@ const Contact = () => {
               name="name"
               type="text"
               className="field-input field-input-focus"
-              
               autoComplete="name"
               value={formData.name}
               onChange={handleChange}
               required
             />
           </div>
+
           <div className="mb-5">
-            <label htmlFor="email" className="feild-label">
-              ایمیل
+            <label htmlFor="phone" className="feild-label">
+              شماره تماس
             </label>
             <input
-              id="email"
-              name="email"
-              type="email"
+              id="phone"
+              name="phone"
+              type="tel"
               className="field-input field-input-focus"
-              
-              autoComplete="email"
-              value={formData.email}
+              autoComplete="tel"
+              value={formData.phone}
               onChange={handleChange}
               required
             />
           </div>
+
           <div className="mb-5">
             <label htmlFor="message" className="feild-label">
               توضیحات
@@ -112,18 +125,17 @@ const Contact = () => {
             <textarea
               id="message"
               name="message"
-              type="text"
               rows="4"
               className="field-input field-input-focus"
-              
-              autoComplete="message"
+              autoComplete="off"
               value={formData.message}
               onChange={handleChange}
               required
             />
           </div>
+
           <button
-            type="ثبت شد"
+            type="submit"
             className="w-full px-1 py-3 text-lg text-center rounded-md cursor-pointer bg-radial from-lavender to-royal hover-animation"
           >
             {!isLoading ? "ثبت" : "در حال ارسال"}
