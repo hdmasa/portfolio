@@ -51,13 +51,15 @@ const Contact = () => {
       setFormData(initialFormData);
       showAlertMessage(
         "success",
-        result.message || "پیام شما با موفقیت ثبت شد و در اولین فرصت با شما تماس می‌گیرم.",
+        result.message ||
+          "پیام شما با موفقیت ثبت شد و در اولین فرصت با شما تماس می‌گیرم.",
       );
     } catch (error) {
       console.error(error);
       showAlertMessage(
         "danger",
-        error.message || "در ثبت پیام شما مشکلی پیش آمد. لطفاً دوباره تلاش کنید.",
+        error.message ||
+          "در ثبت پیام شما مشکلی پیش آمد. لطفاً دوباره تلاش کنید.",
       );
     } finally {
       setIsLoading(false);
@@ -81,7 +83,9 @@ const Contact = () => {
         <div className="flex flex-col items-start w-full gap-5 mb-10">
           <h2 className="text-heading">ارتباط با من</h2>
           <p className="font-normal text-neutral-400">
-            اگر قصد داشته باشید یک وب‌سایت جدید بسازید، پلتفرم فعلی‌تان را بهبود دهید، یا پروژه‌ای منحصربه‌فرد را به واقعیت تبدیل کنید، من اینجا هستم تا کمک کنم.
+            اگر قصد داشته باشید یک وب‌سایت جدید بسازید، پلتفرم فعلی‌تان را بهبود
+            دهید، یا پروژه‌ای منحصربه‌فرد را به واقعیت تبدیل کنید، من اینجا هستم
+            تا کمک کنم.
           </p>
         </div>
 
