@@ -1,0 +1,242 @@
+{
+	"version": "2.0.0",
+	"tasks": [
+		{
+			"label": "Apply local D1 migration",
+			"type": "shell",
+			"command": "npx",
+			"args": [
+				"wrangler",
+				"d1",
+				"migrations",
+				"apply",
+				"portfolio-db",
+				"--local",
+				"--config",
+				"wrangler.jsonc"
+			],
+			"isBackground": false,
+			"problemMatcher": []
+		},
+		{
+			"label": "Verify local D1 table",
+			"type": "shell",
+			"command": "npx",
+			"args": [
+				"wrangler",
+				"d1",
+				"execute",
+				"portfolio-db",
+				"--local",
+				"--config",
+				"wrangler.jsonc",
+				"--command",
+				"SELECT name FROM sqlite_master WHERE type='table' AND name='contact_messages';"
+			],
+			"isBackground": false,
+			"problemMatcher": []
+		},
+		{
+			"label": "Test local contact POST",
+			"type": "shell",
+			"command": "node",
+			"args": [
+				"-e",
+				"fetch('http://localhost:3000/api/contact',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({name:'Local test',phone:'123',message:'D1 test'})}).then(async r=>console.log(r.status,await r.text())).catch(console.error)"
+			],
+			"isBackground": false,
+			"problemMatcher": []
+		},
+		{
+			"label": "Test local contact POST",
+			"type": "shell",
+			"command": "powershell",
+			"args": [
+				"-NoProfile",
+				"-Command",
+				"$body = @{ name = 'Local test'; phone = '123'; message = 'D1 test' } | ConvertTo-Json; Invoke-RestMethod -Uri 'http://localhost:3000/api/contact' -Method Post -ContentType 'application/json' -Body $body | ConvertTo-Json -Compress"
+			],
+			"isBackground": false,
+			"problemMatcher": []
+		},
+		{
+			"label": "Check Cloudflare deployments",
+			"type": "shell",
+			"command": "npx",
+			"args": [
+				"wrangler",
+				"deployments",
+				"list",
+				"--config",
+				"wrangler.jsonc"
+			],
+			"isBackground": false,
+			"problemMatcher": []
+		},
+		{
+			"label": "Check OpenNext artifact",
+			"type": "shell",
+			"command": "powershell",
+			"args": [
+				"-NoProfile",
+				"-Command",
+				"Write-Output (Test-Path '.open-next/worker.js'); Get-ChildItem '.open-next' -Force -ErrorAction SilentlyContinue | Select-Object Name"
+			],
+			"isBackground": false,
+			"problemMatcher": []
+		},
+		{
+			"label": "Build and deploy Cloudflare Worker",
+			"type": "shell",
+			"command": "wsl",
+			"args": [
+				"bash",
+				"-lc",
+				"cd /mnt/c/Users/PowerUser/Desktop/portfolio && npm install && npm run cf:build && npx wrangler deploy"
+			],
+			"isBackground": false,
+			"problemMatcher": []
+		},
+		{
+			"label": "Clear OpenNext output",
+			"type": "shell",
+			"command": "powershell",
+			"args": [
+				"-NoProfile",
+				"-Command",
+				"Get-Process node -ErrorAction SilentlyContinue | Stop-Process -Force -ErrorAction SilentlyContinue; Remove-Item -Recurse -Force .open-next -ErrorAction SilentlyContinue; Write-Output 'cleared'"
+			],
+			"isBackground": false,
+			"problemMatcher": []
+		},
+		{
+			"label": "Build and deploy cleanly",
+			"type": "shell",
+			"command": "wsl",
+			"args": [
+				"bash",
+				"-lc",
+				"cd /mnt/c/Users/PowerUser/Desktop/portfolio && which node && node --version && which npm && npm --version && npm run cf:build && npx wrangler deploy"
+			],
+			"isBackground": false,
+			"problemMatcher": []
+		},
+		{
+			"label": "Check WSL runtime",
+			"type": "shell",
+			"command": "wsl",
+			"args": [
+				"-e",
+				"bash",
+				"-c",
+				"pwd; which node; node --version; which npm; npm --version"
+			],
+			"isBackground": false,
+			"problemMatcher": []
+		},
+		{
+			"label": "Build and deploy Worker",
+			"type": "shell",
+			"command": "npm",
+			"args": [
+				"run",
+				"cf:deploy"
+			],
+			"isBackground": false,
+			"problemMatcher": []
+		},
+		{
+			"label": "Deploy built Worker",
+			"type": "shell",
+			"command": "npx",
+			"args": [
+				"wrangler",
+				"deploy",
+				"--yes",
+				"--config",
+				"wrangler.jsonc"
+			],
+			"isBackground": false,
+			"problemMatcher": []
+		},
+		{
+			"label": "Confirm Cloudflare deployment",
+			"type": "shell",
+			"command": "cmd",
+			"args": [
+				"/c",
+				"(echo y) | npx wrangler deploy --config wrangler.jsonc"
+			],
+			"isBackground": false,
+			"problemMatcher": []
+		},
+		{
+			"label": "Retry Cloudflare deployment",
+			"type": "shell",
+			"command": "cmd",
+			"args": [
+				"/c",
+				"(echo y) | npx wrangler deploy --config wrangler.jsonc"
+			],
+			"isBackground": false,
+			"problemMatcher": []
+		},
+		{
+			"label": "Check live Worker API",
+			"type": "shell",
+			"command": "curl.exe",
+			"args": [
+				"-sS",
+				"-i",
+				"https://portfolio.mahsasamie894.workers.dev/api/contact"
+			],
+			"isBackground": false,
+			"problemMatcher": []
+		},
+		{
+			"label": "Lint footer changes",
+			"type": "shell",
+			"command": "npm",
+			"args": [
+				"run",
+				"lint"
+			],
+			"isBackground": false,
+			"problemMatcher": []
+		},
+		{
+			"label": "Lint edited files",
+			"type": "shell",
+			"command": "npx",
+			"args": [
+				"eslint",
+				"src/app/layout.jsx",
+				"src/sections/Footer.jsx"
+			],
+			"isBackground": false,
+			"problemMatcher": []
+		},
+		{
+			"label": "Build project",
+			"type": "shell",
+			"command": "npm",
+			"args": [
+				"run",
+				"build"
+			],
+			"isBackground": false,
+			"problemMatcher": []
+		},
+		{
+			"label": "Deploy footer and favicon",
+			"type": "shell",
+			"command": "cmd",
+			"args": [
+				"/c",
+				"npm run cf:build && (echo y) | npx wrangler deploy --config wrangler.jsonc"
+			],
+			"isBackground": false,
+			"problemMatcher": []
+		}
+	]
+}

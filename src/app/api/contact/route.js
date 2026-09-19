@@ -1,36 +1,18 @@
-import { promises as fs } from "fs";
-import path from "path";
+import { getCloudflareContext } from "@opennextjs/cloudflare";
 
-const dataDir = path.join(process.cwd(), "data");
-const dataFile = path.join(dataDir, "contact-messages.json");
-
-async function ensureDataFile() {
-  await fs.mkdir(dataDir, { recursive: true });
-
-  try {
-    await fs.access(dataFile);
-  } catch {
-    await fs.writeFile(dataFile, JSON.stringify([], null, 2), "utf-8");
-  }
-}
-
-async function loadMessages() {
-  await ensureDataFile();
-
-  try {
-    const fileContents = await fs.readFile(dataFile, "utf-8");
-    const parsed = JSON.parse(fileContents || "[]");
-
-    return Array.isArray(parsed) ? parsed : [];
-  } catch {
-    await fs.writeFile(dataFile, JSON.stringify([], null, 2), "utf-8");
-    return [];
-  }
-}
+export const dynamic = "force-dynamic";
 
 export async function GET() {
   try {
-    const messages = await loadMessages();
+    const { env } = await getCloudflareContext({ async: true });
+    const { results } = await env.DB.prepare(
+      "SELECT id, name, phone, message, created_at FROM contact_messages ORDER BY created_at DESC",
+    ).all();
+
+    const messages = results.map((message) => ({
+      ...message,
+      createdAt: message.created_at,
+    }));
 
     return Response.json({ messages });
   } catch (error) {
@@ -43,9 +25,9 @@ export async function GET() {
   }
 }
 
-async function sendSmsToUser({ name, phone, message }) {
-  const kavenegarApiKey = process.env.KAVENEGAR_API_KEY;
-  const kavenegarSender = process.env.KAVENEGAR_SENDER;
+async function sendSmsToUser({ name, phone, message }, env) {
+  const kavenegarApiKey = env.KAVENEGAR_API_KEY || process.env.KAVENEGAR_API_KEY;
+  const kavenegarSender = env.KAVENEGAR_SENDER || process.env.KAVENEGAR_SENDER;
 
   if (!kavenegarApiKey || !kavenegarSender) {
     return;
@@ -82,7 +64,9 @@ async function sendSmsToUser({ name, phone, message }) {
 export async function POST(request) {
   try {
     const body = await request.json();
-    const { name, phone, message } = body;
+    const name = String(body.name || "").trim();
+    const phone = String(body.phone || "").trim();
+    const message = String(body.message || "").trim();
 
     if (!name || !phone || !message) {
       return Response.json(
@@ -93,21 +77,28 @@ export async function POST(request) {
       );
     }
 
-    const messages = await loadMessages();
-
     const newMessage = {
-      id: `${Date.now()}-${Math.random().toString(16).slice(2)}`,
-      name: String(name).trim(),
-      phone: String(phone).trim(),
-      message: String(message).trim(),
+      id: crypto.randomUUID(),
+      name,
+      phone,
+      message,
       createdAt: new Date().toISOString(),
     };
 
-    messages.unshift(newMessage);
+    const { env } = await getCloudflareContext({ async: true });
+    await env.DB.prepare(
+      "INSERT INTO contact_messages (id, name, phone, message, created_at) VALUES (?, ?, ?, ?, ?)",
+    )
+      .bind(
+        newMessage.id,
+        newMessage.name,
+        newMessage.phone,
+        newMessage.message,
+        newMessage.createdAt,
+      )
+      .run();
 
-    await fs.writeFile(dataFile, JSON.stringify(messages, null, 2), "utf-8");
-
-    await sendSmsToUser(newMessage);
+    await sendSmsToUser(newMessage, env);
 
     return Response.json(
       {

@@ -1,24 +1,17 @@
-import { promises as fs } from "fs";
-import path from "path";
+import { getCloudflareContext } from "@opennextjs/cloudflare";
 
-const dataDir = path.join(process.cwd(), "data");
-const dataFile = path.join(dataDir, "contact-messages.json");
+export const dynamic = "force-dynamic";
 
 async function getMessages() {
-  try {
-    await fs.mkdir(dataDir, { recursive: true });
+  const { env } = await getCloudflareContext({ async: true });
+  const { results } = await env.DB.prepare(
+    "SELECT id, name, phone, message, created_at FROM contact_messages ORDER BY created_at DESC",
+  ).all();
 
-    try {
-      await fs.access(dataFile);
-    } catch {
-      await fs.writeFile(dataFile, JSON.stringify([], null, 2), "utf-8");
-    }
-
-    const fileContents = await fs.readFile(dataFile, "utf-8");
-    return JSON.parse(fileContents || "[]");
-  } catch {
-    return [];
-  }
+  return results.map((message) => ({
+    ...message,
+    createdAt: message.created_at,
+  }));
 }
 
 export default async function MessagesPage() {
